@@ -58,11 +58,57 @@ document.querySelectorAll('#generate-json').forEach(button => {
       localStorage.setItem('currentSheetName', sheetName);
       localStorage.setItem('jsonData', JSON.stringify(jsonData));
 
-      // Redirect the user to the Select Column page
-      window.location.href = 'selectColumnGenerateQuestion.html';
+      // Varsayılan olarak Question Turkish (A) - Answer Deutsch (C) seçeneğini kullan
+      // Generate quiz data
+      const quizData = generateQuiz(jsonData, 'AtoC');
+      localStorage.setItem('quizData', JSON.stringify(quizData));
+
+      // Redirect the user to the Select Column page instead of selectColumnGenerateQuestion.html
+      window.location.href = 'selectQuestion.html';
     } catch (error) {
       alert(`Hata: ${error.message}`);
       console.error('Hata:', error);
     }
   });
 });
+
+// Shuffle the array
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// Generate Quiz 
+function generateQuiz(inputList, columnOption) {
+  const quizData = [];
+
+  inputList.forEach((map) => {
+    const question = columnOption === 'AtoC' ? map["ColumnA"] : map["ColumnB"];
+    const correctAnswer = columnOption === 'AtoC' ? map["ColumnB"] : map["ColumnA"];
+
+    // Set used to select incorrect answers
+    const optionsSet = new Set();
+    optionsSet.add(correctAnswer);
+
+    // Random incorrect options are being selected
+    while (optionsSet.size < 4) {
+      const randomEntry = inputList[Math.floor(Math.random() * inputList.length)];
+      optionsSet.add(columnOption === 'AtoC' ? randomEntry["ColumnB"] : randomEntry["ColumnA"]);
+    }
+
+    // Shuffle the options
+    const options = Array.from(optionsSet);
+    shuffleArray(options);
+
+    // Create the question structure
+    quizData.push({
+      question: question,
+      options: options,
+      answer: correctAnswer,
+    });
+  });
+
+  return quizData;
+}
